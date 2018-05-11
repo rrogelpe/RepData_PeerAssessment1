@@ -1,25 +1,144 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+author: "Rodrigo"
+date: "May 2, 2018"
+output: html_document
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
 ## Loading and preprocessing the data
 
+```{r}
+#read data file
+dat <- read.csv('activity.csv')
+#convert date values to Date class
+dat$date <- as.Date(dat$date, format = "%Y-%m-%d")
+```
 
+## What is mean and median of the total number of steps taken per day?
 
-## What is mean total number of steps taken per day?
+First, we calculate the total number of steps taken per day.
+```{r}
+#Group data by date and sum steps 
+aggDat <- with(dat, aggregate(formula = steps ~ date, FUN = sum))
+print(aggDat)
+```
 
+We proceed to make a histogram of the total number of steps taken each day during the months of October & November.
 
+```{r}
+par(mar=c(6.1,4.1,4.1,2.1))
+# Create histogram. Add unique color to each bar and divide y-axis values by 1000 to scale nicely
+with(aggDat, barplot(steps/1000, names.arg = date, 
+		col = rainbow(length(unique(date))), 
+		main = "Total Steps Taken in October & November",
+		las=2, 
+		ylab = "Steps (Thousands)",
+		cex.names = 0.7))
+```
+
+Finally, we report the mean and median of the total number of steps taken per day during these months.
+
+Mean:
+```{r}
+# Calculate the mean of the number of steps taken per day
+avgSteps <- with(dat, aggregate(formula = steps ~ date, FUN = mean))
+print(avgSteps)
+```
+
+Median:
+```{r}
+# Calculate the median of the number of steps taken per day during 5 min intervals
+mdnSteps <- with(dat, aggregate(formula = steps ~ date, FUN = median))
+print(mdnSteps)
+```
 
 ## What is the average daily activity pattern?
 
+We make a time series to show the avg. daily activity pattern.
 
+```{r echo=TRUE}
+# Create line plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+avgIntvlSteps <- with(dat, aggregate(formula = steps ~ interval, FUN = mean))
+with(avgIntvlSteps, plot(interval, steps, type = 'l',
+                         xlab = 'Minutes', 
+                         ylab = 'Steps', 
+                         main = 'Avg. Number of Steps Over Time'))
+```
+
+```{r echo=TRUE}
+# Find the interval where the average number of steps taken is highest.
+avgIntvlSteps[which(avgIntvlSteps$steps == max(avgIntvlSteps$steps)),]
+```
+
+We see from the above that the 835 min interval, on average across all days in the datase, contains the maximum number of steps.
 
 ## Imputing missing values
 
+```{r echo=TRUE}
+# Calculate number of rows which have missing values
+countNA <- sum(is.na(dat$steps))
+print(countNA)
+```
 
+Using the code above, we note that there are `r countNA` rows with NA. To confirm the presence of missing days does not introduce bias into our calculations, we replace all missing values with the mean for that 5 min interval.
+
+```{r echo=TRUE}
+     #Replace missing values with the mean of that 5 minute interval and create new dataset with this information
+     temp1 <- dat[!is.na(dat$steps),]
+     temp2 <- dat[is.na(dat$steps),]
+     temp2 <- cbind(avgIntvlSteps$steps, temp2[2:3])
+     colnames(temp2) <- colnames(temp1)
+     dat2 <- rbind(temp1,temp2)
+     dat2 <- dat2[order(dat2$date),]
+``` 
+
+Using the new dataset, we again create a histogram showing the total number of steps taken each day.
+
+```{r echo=TRUE}
+     aggDat <- with(dat2, aggregate(formula = steps ~ date, FUN = sum))
+     
+     with(aggDat, barplot(steps/1000, names.arg = date, 
+		col = rainbow(length(unique(date))), 
+		main = "Total Steps Taken in October & November",
+		las=2, 
+		ylab = "Steps (Thousands)",
+		cex.names = 0.65))
+```
+
+Mean:
+```{r}
+avgSteps <- with(dat2, aggregate(formula = steps ~ date, FUN = mean))
+print(avgSteps)
+```
+
+Median:
+```{r}
+mdnSteps <- with(dat2, aggregate(formula = steps ~ date, FUN = median))
+print(mdnSteps)
+```
+
+Since missing values were present throughout the entire day as opposed to times throughout the day, replacing the NA values had no effect on the mean, median, and sum of the days with no missing values (i.e their values do not differ from the earlier estimates).
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+library(lattice)
+dayType <- dat2$date
+dayType <- weekdays(dayType)
+# Replace day of the week with string 'weekday' and replace weekend days with string 'weekend'.
+dayType[dayType=='Monday' | dayType=='Tuesday' | dayType=='Wednesday' | dayType=='Thursday' | dayType=='Friday'] <- 'weekday'
+dayType[dayType=='Saturday' | dayType=='Sunday'] <- 'weekend'
+# Add column to dataset
+dat2 <- cbind(dat2,dayType)
+#Group data by interval and dataType and find mean of total number of steps.
+groupedDat <- with(dat2, aggregate(steps,by=list(interval,dayType), FUN = mean))
+colnames(groupedDat) <- c('interval','dayType','steps')
+# Create lattice plot showing differences in activity levels in weekday and weekend.
+xyplot(steps ~ interval | dayType, data = groupedDat, layout = c(1,2), type = 'l')
+```
+
+A few differences are noted. First, activity starts at an earlier interval during the weekday compared to the weekend. Second, although activity levels in both peak at around the same interval (750 ish) the peak during wekdays is significatly higher. Lastly, activity levels seem to be higher on average during the weekend after the 1000th interval.
