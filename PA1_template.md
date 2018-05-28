@@ -101,7 +101,7 @@ with(aggDat, barplot(steps/1000, names.arg = date,
 		cex.names = 0.7))
 ```
 
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png)
+![plot of chunk plot1](figure/plot1-1.png)
 
 Finally, we report the mean and median of the total number of steps taken per day during these months.
 
@@ -249,7 +249,7 @@ with(avgIntvlSteps, plot(interval, steps, type = 'l',
                          main = 'Avg. Number of Steps Over Time'))
 ```
 
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
+![plot of chunk plot2](figure/plot2-1.png)
 
 
 ```r
@@ -304,7 +304,7 @@ Using the new dataset, we again create a histogram showing the total number of s
 		cex.names = 0.65))
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+![plot of chunk plot3](figure/plot3-1.png)
 
 Mean:
 
@@ -471,6 +471,6 @@ colnames(groupedDat) <- c('interval','dayType','steps')
 xyplot(steps ~ interval | dayType, data = groupedDat, layout = c(1,2), type = 'l')
 ```
 
-![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png)
+![plot of chunk plot4](figure/plot4-1.png)
 
 A few differences are noted. First, activity starts at an earlier interval during the weekday compared to the weekend. Second, although activity levels in both peak at around the same interval (750 ish) the peak during wekdays is significatly higher. Lastly, activity levels seem to be higher on average during the weekend after the 1000th interval.
